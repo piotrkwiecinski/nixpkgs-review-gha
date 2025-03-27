@@ -23,23 +23,13 @@ on:
         required: true
         type: boolean
         default: true
-      x86_64-darwin:
-        description: "Run on x86_64-darwin"
+      all-darwin:
+        description: "Run on aarch64-darwin, x86_64-darwin"
         required: true
         type: choice
         default: yes_sandbox_true
         options:
-          - 'no'
-          - yes_sandbox_false
-          - yes_sandbox_relaxed
-          - yes_sandbox_true
-      aarch64-darwin:
-        description: "Run on aarch64-darwin"
-        required: true
-        type: choice
-        default: yes_sandbox_true
-        options:
-          - 'no'
+          - "no"
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
@@ -51,7 +41,7 @@ on:
         description: "Push to cache"
         required: true
         type: boolean
-        default: true
+        default: false
       upterm:
         description: "Start upterm session after nixpkgs-review"
         required: true
@@ -81,8 +71,8 @@ jobs:
         exclude:
           - system: ${{ !inputs.x86_64-linux && 'x86_64-linux' || '' }}
           - system: ${{ !inputs.aarch64-linux && 'aarch64-linux' || '' }}
-          - system: ${{ inputs.x86_64-darwin == 'no' && 'x86_64-darwin' || '' }}
-          - system: ${{ inputs.aarch64-darwin == 'no' && 'aarch64-darwin' || '' }}
+          - system: ${{ inputs.all-darwin == 'no' && 'x86_64-darwin' || '' }}
+          - system: ${{ inputs.all-darwin == 'no' && 'aarch64-darwin' || '' }}
     runs-on: >-
       ${{ (matrix.system == 'x86_64-linux' && 'ubuntu-latest')
       || (matrix.system == 'aarch64-linux' && 'ubuntu-24.04-arm')
@@ -109,11 +99,11 @@ jobs:
           system: ${{ matrix.system }}
           sandbox: ${{
             (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_false'
-              || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
+            || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
             || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
-              || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
+            || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
-      
+
       - name: install packages
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)
