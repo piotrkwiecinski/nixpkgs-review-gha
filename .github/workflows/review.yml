@@ -37,6 +37,10 @@ on:
         description: "nixpkgs-review extra args"
         required: false
         type: string
+      pkgs-to-build:
+        description: "Packages to build"
+        required: false
+        type: string
       push-to-cache:
         description: "Push to cache"
         required: true
@@ -125,8 +129,19 @@ jobs:
 
       - name: run nixpkgs-review ${{ inputs.extra-args }}
         run: |
+          PKG_ARGS=""
+          if [ -z "$PKGS_TO_BUILD" ]; then
+            echo "::notice::Building all changed packages"
+          else
+            echo "::notice::Building $PKGS_TO_BUILD"
+            for PKG in $PKGS_TO_BUILD; do
+              PKG_ARGS+=" --package $PKG"
+            done
+          fi
+
           nixpkgs-review -- \
             pr ${PR_NUMBER} \
+            $PKG_ARGS \
             --no-shell \
             --no-headers \
             --print-result \
@@ -137,6 +152,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
+          PKGS_TO_BUILD: "${{ inputs.pkgs-to-build }}"
 
       - name: push results to cache
         if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '') }}
